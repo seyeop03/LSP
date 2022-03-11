@@ -32,7 +32,7 @@ struct stat statbuf;
 
 2. stat 함수
 ```c
-stat( [filename], [stat구조체] )
+stat([filename], [stat구조체]);
 ```
 	- S_ISREG – 정규 파일인지 판별
 
