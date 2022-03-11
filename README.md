@@ -36,6 +36,7 @@ struct stat statbuf;
 ```c
 stat([filename], [stat구조체]);
 ```
+
 	- S_ISREG – 정규 파일인지 판별
 
 	- S_ISDIR – 디렉토리 파일인지 판별
