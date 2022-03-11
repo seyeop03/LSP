@@ -5,6 +5,7 @@ Linux System Programming 설계과제_1 을 하기위한 약간의 지식들 설
 
 <br><br>
 # scandir함수
+- 헤더파일 `dirent.h` 필요
 - 설정한경로와 같은 depth의 파일 및 디렉토리 모두 뽑아옴
 - return 파일 및 디렉토리 갯수
 
@@ -22,7 +23,7 @@ struct dirent{
 };
 ```
 
-`#include <sys/stat.h>`
+## \#include <sys/stat.h>
 	1. `struct stat statbuf;`
   - stat구조체의 -> st_mode가 S_ISREG or S_ISDIR or ⋯⋯
 	2. `stat( [filename], [stat구조체] )`
