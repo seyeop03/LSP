@@ -24,15 +24,15 @@ struct dirent{
 ```
 
 ## \#include <sys/stat.h>
-	1. `struct stat statbuf;`
+1. `struct stat statbuf;`
   - stat구조체의 -> st_mode가 S_ISREG or S_ISDIR or ⋯⋯
-	2. `stat( [filename], [stat구조체] )`
-		S_ISREG – 정규 파일인지 판별
+2. `stat( [filename], [stat구조체] )`
+	- S_ISREG – 정규 파일인지 판별
 
-		S_ISDIR – 디렉토리 파일인지 판별
+	- S_ISDIR – 디렉토리 파일인지 판별
 
-		S_ISCHR – 문자 장치 파일인지 판별
+S_ISCHR – 문자 장치 파일인지 판별
 
-		S_ISBLK – 블록 장치 파일인지 판별
+S_ISBLK – 블록 장치 파일인지 판별
 
-		S_ISFIFO – FIFO 파일인지 판별
+S_ISFIFO – FIFO 파일인지 판별
