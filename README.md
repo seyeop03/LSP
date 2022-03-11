@@ -1,6 +1,6 @@
 # LSP
 
-> 과제_1 을 하기위한 약간의 지식들 설명
+Linux System Programming 설계과제_1 을 하기위한 약간의 지식들 설명
 
 ---
 
