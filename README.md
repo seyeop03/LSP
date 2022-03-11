@@ -24,7 +24,9 @@ struct dirent{
 ```
 
 ## \#include <sys/stat.h>
-1. stat 구조체
+
+	1. stat 구조체
+
 ```c
 struct stat statbuf;
 ```
