@@ -25,14 +25,14 @@ struct dirent{
 
 ## \#include <sys/stat.h>
 
-1. stat 구조체
+**1. stat 구조체**
 
 ```c
 struct stat statbuf;
 ```
   - stat구조체의 -> st_mode가 S_ISREG or S_ISDIR or ⋯⋯
 
-2. stat 함수
+**2. stat 함수**
 ```c
 stat([filename], [stat구조체]);
 ```
