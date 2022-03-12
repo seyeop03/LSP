@@ -48,8 +48,8 @@ void Scandir(char *wd, void (*func)(char *), int depth)
         {
             continue;
         }
-	printf("nitems : %d", nitems);
-        // 함수포인터를 호출한다. 인자로 검색한 파일이름이 넘어간다.
+        
+	// 함수포인터를 호출한다. 인자로 검색한 파일이름이 넘어간다.
         func(items[i]->d_name);
 
         // 만약 파일이 디렉토리 이라면
@@ -92,7 +92,7 @@ int main(){
 		}
 		else if(!strcmp(ter,"")) continue;
 		else if(!strcmp(ter,"find")){
-			Scandir("..", myfunc, 0);
+			Scandir(".", myfunc, 0);
 		}
 		else{
 			printf("Usage:\n  > find [FILENAME] [PATH]\n");
