@@ -13,6 +13,12 @@ struct dirent **items;
 scandir(".", &items, NULL, alphasort); // items에 파일이름, 길이 등이 담긴다
 ```
 
+## chdir
+- change directory의 약자로 현재 작업디렉토리를 변경한다.
+```c
+int chdir( const char *dirname );
+```
+
 ## dirent 구조체
 
 ```c
