@@ -8,6 +8,10 @@ Linux System Programming 설계과제_1 을 하기위한 약간의 지식들 설
 - 헤더파일 `dirent.h` 필요
 - 설정한경로와 같은 depth의 파일 및 디렉토리 모두 뽑아옴
 - return 파일 및 디렉토리 갯수
+```c
+struct dirent **items;
+scandir(".", &items, NULL, alphasort); // items에 파일이름, 길이 등이 담긴다
+```
 
 ## dirent 구조체
 
