@@ -8,6 +8,19 @@ Linux System Programming 설계과제_1 을 하기위한 약간의 지식들 설
 - 헤더파일 `dirent.h` 필요
 - 설정한경로와 같은 depth의 파일 및 디렉토리 모두 뽑아옴
 - return 파일 및 디렉토리 갯수
+```c
+struct dirent **items;
+scandir(".", &items, NULL, alphasort); // items에 파일이름, 길이 등이 담긴다
+```
+
+## chdir , getcwd
+- `chdir` : change directory의 약자로 현재 작업디렉토리를 변경한다.
+- `getcwd` : 현재 작업디렉토리를 가져온다.
+```c
+int chdir( const char *dirname ); // 인자로 받은 디렉토리로 이동
+
+char *getcwd( char *buffer, size_t size ); // buffer는 작업 디렉토리 문자열을 담을 버퍼, size는 버퍼 크기
+```
 
 ## dirent 구조체
 
