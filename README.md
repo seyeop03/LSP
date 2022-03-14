@@ -42,7 +42,36 @@ struct dirent{
 
 ```c
 struct stat statbuf;
+
+struct stat {
+     dev_t          st_dev;        /*ID of device containing file */
+
+     ino_t          st_ino;        /*inode number*/
+
+     mode_t         st_mode;       /*protection*/
+
+     nlink_t        st_nlink;      /*number of hard links*/
+
+     uid_t          st_uid;        /*user ID of owner*/
+
+     gid_t          st_gid;        /*group ID of owner*/
+
+     dev_t          st_rdev;       /*device ID (if special file)*/
+
+     off_t          st_size;       /*total size, in byte*/
+
+     blksize_t      st_blksize;    /*blocksize for file system I/O*/
+
+     blkcnt_t       st_blocks;     /*number of 512B blocks allocated*/
+
+     time_t;        st_atime;      /*time of last access*/
+
+     time_t;        st_mtime;      /*time of last modification*/
+
+     time_t         st_xtime;      /*time of last status change*/
+};
 ```
+- **핵심**: stat구조체를 이용하여 파일인지 디렉토리인지 파악할 수 있다.
   - stat구조체의 -> st_mode가 S_ISREG or S_ISDIR or ⋯⋯
 
 **2. stat 함수**
