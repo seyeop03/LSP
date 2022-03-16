@@ -37,10 +37,30 @@ void myfunc(char *file, struct stat *fstat){
 }
 
 
+void myfunc2(char *file, struct stat *fstat){
+
+	printf("%d ", fstat->st_size);
+	printf("%d ", fstat->st_blocks);	
+	printf("%d ", fstat->st_nlink);	
+	printf("%d ", fstat->st_uid);	
+	printf("%d ", fstat->st_gid);	
+	printf("%d ", fstat->st_atime);	
+	printf("%d ", fstat->st_ctime);	
+	printf("%d ", fstat->st_mtime);	
+	printf("%d ", fstat->st_mode);
+	if(strcmp(getcwd(cdir,256), "/")){
+		printf("%s/%s\n", getcwd(cdir, 256),file);
+	}
+	else{
+		printf("/%s\n",file);
+	}
+}
+
 void Scandir(char *file, char *wd, void (*func)(char *, struct stat *), int depth)
 {
     struct dirent **items;
     int nitems, i;
+
     // 인자로 받은 디렉토리로 이동한다.
     if (chdir(wd) < 0)
     {
@@ -87,7 +107,7 @@ void Scandir(char *file, char *wd, void (*func)(char *, struct stat *), int dept
              // if (indent < (depth-1) || (depth == 0))
             
             //	indent ++;
-                 Scandir(file, items[i]->d_name, func, depth);
+                 Scandir(file, items[i]->d_name, func, depth); // 하위로 한칸 이동
           
         }
     }
@@ -124,7 +144,29 @@ int main(){
 			return 0;
 		}
 		else if(!strcmp(command[0],"find")){
-			Scandir(command[1], command[2], myfunc, 0);
+			char buf1[1024], buf2[1024];
+		        char cdir[256];
+			char *ptr;
+			getcwd(cdir, 256); // Scandir이 끝나면 '/'로 이동되므로, cdir미리 저장 => 다시 원래 디렉토리로 이동(getcwd+chdir)	
+			
+			if(realpath(command[1], buf1) == NULL){ // command[1] 절대경로로 변환 
+				perror(buf1);
+				printf("\n");
+				continue;
+			}
+
+   			ptr = strrchr(buf1, '/');     // "/"으로 시작하는 문자열 검색, 포인터 반환 (command[1]의 절대경로빼고 파일이름만 반환받기 위함)
+    			ptr+=1;
+
+			if(realpath(command[2], buf2) == NULL){ // command[2] 절대경로 있는지 검사
+				perror(buf2);
+				printf("\n");
+				continue;
+			}; 
+
+
+			Scandir(ptr, command[2], myfunc, 0);
+			chdir(cdir); // Scandir끝난후 원래 디렉토리로 이동
 		}
 		else{
 			help_print();
@@ -132,6 +174,7 @@ int main(){
 
 	}
 }
+
 
 
 char **parse(char *data){
@@ -142,7 +185,7 @@ char **parse(char *data){
 
 	char *tmp_ptr = strtok(data," "); // 처음 토큰을 넣는다.
 	
-	if(tmp_ptr == NULL)
+	if(tmp_ptr == NULL) // spacebar만 있을경우 NULL을 리턴
 		return NULL;
 
 	while(tmp_ptr!=NULL)
