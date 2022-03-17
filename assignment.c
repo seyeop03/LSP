@@ -6,28 +6,63 @@
 #include <sys/time.h>
 #include <unistd.h>
 #include <malloc.h>
+#include <time.h>
 
 #define MAX 1024
 
 char **parse(char *);
 void help_print();
 
-static int  indent = 0;
+static int  idx = 0;
 
 char cdir[256];
 
+char buf1[1024];// command[1]
+struct stat fstat_1;// command[1] stat
 
 void myfunc(char *file, struct stat *fstat){
+	
+    	struct tm *tm;
+	char buf[200];
+	
+	printf("%-6d", idx++); // Index
+	printf("%-7d ", fstat->st_size); // Size
 
-	printf("%d ", fstat->st_size);
-	printf("%d ", fstat->st_blocks);	
-	printf("%d ", fstat->st_nlink);	
-	printf("%d ", fstat->st_uid);	
-	printf("%d ", fstat->st_gid);	
-	printf("%d ", fstat->st_atime);	
-	printf("%d ", fstat->st_ctime);	
-	printf("%d ", fstat->st_mtime);	
-	printf("%d ", fstat->st_mode);
+    printf( (S_ISDIR(fstat->st_mode)) ? "d" : "-");
+    printf( (fstat->st_mode & S_IRUSR) ? "r" : "-");
+    printf( (fstat->st_mode & S_IWUSR) ? "w" : "-");
+    printf( (fstat->st_mode & S_IXUSR) ? "x" : "-");
+    printf( (fstat->st_mode & S_IRGRP) ? "r" : "-");
+    printf( (fstat->st_mode & S_IWGRP) ? "w" : "-");
+    printf( (fstat->st_mode & S_IXGRP) ? "x" : "-");
+    printf( (fstat->st_mode & S_IROTH) ? "r" : "-");
+    printf( (fstat->st_mode & S_IWOTH) ? "w" : "-");
+    printf( (fstat->st_mode & S_IXOTH) ? "x" : "-");
+
+    	printf("  %-7d ", fstat->st_blocks);
+	printf("%-7d ", fstat->st_nlink);	
+	printf("%-7d ", fstat->st_uid);	
+	printf("%-7d ", fstat->st_gid);
+
+	
+    	tm = localtime(&fstat->st_atime); /* convert time_t to broken-down time representation */
+	
+    	strftime(buf, sizeof(buf), "%y-%m-%d %H:%M", tm); /* format time days.month.year hour:minute:seconds */
+   	printf("%s ", buf);	
+	
+	
+    	tm = localtime(&fstat->st_atime); /* convert time_t to broken-down time representation */
+	
+    	strftime(buf, sizeof(buf), "%y-%m-%d %H:%M", tm);
+   	printf("%s ", buf);	
+	
+
+    	tm = localtime(&fstat->st_atime); /* convert time_t to broken-down time representation */
+	
+    	strftime(buf, sizeof(buf), "%y-%m-%d %H:%M", tm);
+   	printf("%s ", buf);	
+
+	
 	if(strcmp(getcwd(cdir,256), "/")){
 		printf("%s/%s\n", getcwd(cdir, 256),file);
 	}
@@ -37,23 +72,53 @@ void myfunc(char *file, struct stat *fstat){
 }
 
 
-void myfunc2(char *file, struct stat *fstat){
+void myfunc2(char *file){
+	
+    	struct tm *tm;
+	char buf[200];
+	
+	printf("Index Size    Mode        Blocks  Links   UID     GID Access Change Modify Path \n");
+        
+	lstat(file, &fstat_1);
 
-	printf("%d ", fstat->st_size);
-	printf("%d ", fstat->st_blocks);	
-	printf("%d ", fstat->st_nlink);	
-	printf("%d ", fstat->st_uid);	
-	printf("%d ", fstat->st_gid);	
-	printf("%d ", fstat->st_atime);	
-	printf("%d ", fstat->st_ctime);	
-	printf("%d ", fstat->st_mtime);	
-	printf("%d ", fstat->st_mode);
-	if(strcmp(getcwd(cdir,256), "/")){
-		printf("%s/%s\n", getcwd(cdir, 256),file);
-	}
-	else{
-		printf("/%s\n",file);
-	}
+	printf("%-6d", idx++);	
+	printf("%-7d ", fstat_1.st_size);
+
+    printf( (S_ISDIR(fstat_1.st_mode)) ? "d" : "-");
+    printf( (fstat_1.st_mode & S_IRUSR) ? "r" : "-");
+    printf( (fstat_1.st_mode & S_IWUSR) ? "w" : "-");
+    printf( (fstat_1.st_mode & S_IXUSR) ? "x" : "-");
+    printf( (fstat_1.st_mode & S_IRGRP) ? "r" : "-");
+    printf( (fstat_1.st_mode & S_IWGRP) ? "w" : "-");
+    printf( (fstat_1.st_mode & S_IXGRP) ? "x" : "-");
+    printf( (fstat_1.st_mode & S_IROTH) ? "r" : "-");
+    printf( (fstat_1.st_mode & S_IWOTH) ? "w" : "-");
+    printf( (fstat_1.st_mode & S_IXOTH) ? "x" : "-");	
+	
+    	printf("  %-7d ", fstat_1.st_blocks);	
+	printf("%-7d ", fstat_1.st_nlink);	
+	printf("%-7d ", fstat_1.st_uid);	
+	printf("%-7d ", fstat_1.st_gid);
+
+		
+    	tm = localtime(&fstat_1.st_atime); /* convert time_t to broken-down time representation */
+	
+    	strftime(buf, sizeof(buf), "%y-%m-%d %H:%M", tm); /* format time days.month.year hour:minute:seconds */
+   	printf("%s ", buf);	
+	
+	
+    	tm = localtime(&fstat_1.st_atime); /* convert time_t to broken-down time representation */
+	
+    	strftime(buf, sizeof(buf), "%y-%m-%d %H:%M", tm);
+   	printf("%s ", buf);	
+	
+
+    	tm = localtime(&fstat_1.st_atime); /* convert time_t to broken-down time representation */
+	
+    	strftime(buf, sizeof(buf), "%y-%m-%d %H:%M", tm);
+   	printf("%s ", buf);	
+
+	printf("%s\n",file);
 }
 
 void Scandir(char *file, char *wd, void (*func)(char *, struct stat *), int depth)
@@ -99,21 +164,14 @@ void Scandir(char *file, char *wd, void (*func)(char *, struct stat *), int dept
 
         // 만약 파일이 디렉토리 이라면
         // Scandir 을 재귀 호출한다.
-        // 그리고 디렉토리의 depth 레벨을 1 증가 한다.
         if(S_ISDIR(fstat.st_mode))
 	{
-            // depth만큼만 하부 디렉토리검색을 한다.
-            // 0일 경우 깊이에 관계없이 검색한다.
-             // if (indent < (depth-1) || (depth == 0))
             
-            //	indent ++;
                  Scandir(file, items[i]->d_name, func, depth); // 하위로 한칸 이동
           
         }
     }
-    // 디렉토리의 depth 레벨을 1 감소시키고
     // 하위 디렉토리로 이동한다.
-    // indent --;
     chdir("..");
 }
 
@@ -144,7 +202,7 @@ int main(){
 			return 0;
 		}
 		else if(!strcmp(command[0],"find")){
-			char buf1[1024], buf2[1024];
+			char buf2[1024];
 		        char cdir[256];
 			char *ptr;
 			getcwd(cdir, 256); // Scandir이 끝나면 '/'로 이동되므로, cdir미리 저장 => 다시 원래 디렉토리로 이동(getcwd+chdir)	
@@ -163,10 +221,10 @@ int main(){
 				printf("\n");
 				continue;
 			}; 
-
-
+			myfunc2(buf1);
 			Scandir(ptr, command[2], myfunc, 0);
 			chdir(cdir); // Scandir끝난후 원래 디렉토리로 이동
+			idx = 0;
 		}
 		else{
 			help_print();
