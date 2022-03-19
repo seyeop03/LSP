@@ -9,23 +9,56 @@
 #include <time.h>
 
 #define MAX 1024
+#define MAX_NUM(a,b) ((a)>(b)? (a):(b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
+
 
 char **parse(char *);
 void help_print();
+void diff_shell();
+void LCS(char (*str1)[MAX], char (*str2)[MAX], int str1_len, int str2_len);
 
 static int  idx = 0;
 
 char cdir[256];
 
-char buf1[1024];// command[1]
+char buf1[1024];// command[1] (Specifically, <Full Path>)
 struct stat fstat_1;// command[1] stat
+
+
+/* diff_shell을 위한 구조체 */
+struct index_struct{
+	char file_name[MAX];
+	char dirfile;
+};
+struct index_struct f[MAX];
+
+
+
 
 void myfunc(char *file, struct stat *fstat){
 	
-    	struct tm *tm;
+    	struct tm *tm; // time구조체
 	char buf[200];
+	char tmp_cat[MAX];
+
+
+
+/* if~else문 아래것들은 출력인데 원치않는 출력을 하기전에 빨리 없애버리기위해 먼저 경로를 버퍼에 집어넣음 */
+	if(strcmp(getcwd(cdir,256), "/")){
+
+		sprintf(tmp_cat,"%s/%s",getcwd(cdir,256),file);
+		if(!strcmp(buf1, tmp_cat)) return;
+		
+		
+	}
+	else{
+		sprintf(tmp_cat,"/%s",getcwd(cdir,256),file);
+		if(!strcmp(buf1, tmp_cat)) return;
+		
+	}
 	
-	printf("%-6d", idx++); // Index
+	printf("%-6d", ++idx); // Index
 	printf("%-7d ", fstat->st_size); // Size
 
     printf( (S_ISDIR(fstat->st_mode)) ? "d" : "-");
@@ -63,12 +96,12 @@ void myfunc(char *file, struct stat *fstat){
    	printf("%s ", buf);	
 
 	
-	if(strcmp(getcwd(cdir,256), "/")){
-		printf("%s/%s\n", getcwd(cdir, 256),file);
-	}
-	else{
-		printf("/%s\n",file);
-	}
+	printf("%s\n",tmp_cat);
+		
+	// 추후 기능을 위해 전역구조체에 넣어둔다.
+	strcpy(f[idx].file_name, tmp_cat);
+	f[idx].dirfile = S_ISDIR(fstat->st_mode) ? 'd' : 'f';
+	
 }
 
 
@@ -77,11 +110,11 @@ void myfunc2(char *file){
     	struct tm *tm;
 	char buf[200];
 	
-	printf("Index Size    Mode        Blocks  Links   UID     GID Access Change Modify Path \n");
+	printf("Index Size    Mode        Blocks  Links   UID     GID 	  Access	 Change		Modify		Path \n");
         
 	lstat(file, &fstat_1);
 
-	printf("%-6d", idx++);	
+	printf("%-6d", idx);	
 	printf("%-7d ", fstat_1.st_size);
 
     printf( (S_ISDIR(fstat_1.st_mode)) ? "d" : "-");
@@ -145,18 +178,18 @@ void Scandir(char *file, char *wd, void (*func)(char *, struct stat *), int dept
     {
         // 파일 상태를 저장하기 위한 구조체
         struct stat fstat;
-        // 현재디렉토리, 이전디렉토리 는 무시한다.
+
+        lstat(items[i]->d_name, &fstat);
+        
+	// 현재디렉토리, 이전디렉토리 는 무시한다.
         if ( (!strcmp(items[i]->d_name, ".")) || (!strcmp(items[i]->d_name, "..")) )
         {
             continue;
         }
-        
-
-        lstat(items[i]->d_name, &fstat);
 
 
 	if(!strcmp(items[i]->d_name, file)){
-		
+
 		// 함수포인터를 호출한다. 인자로 검색한 파일이름과 속성들을 출력하는 함수이다.
         	func(items[i]->d_name, &fstat);
 	
@@ -207,7 +240,7 @@ int main(){
 			char *ptr;
 			getcwd(cdir, 256); // Scandir이 끝나면 '/'로 이동되므로, cdir미리 저장 => 다시 원래 디렉토리로 이동(getcwd+chdir)	
 			
-			if(realpath(command[1], buf1) == NULL){ // command[1] 절대경로로 변환 
+			if(realpath(command[1], buf1) == NULL){ // command[1] 절대경로로 있는지 검사후 있으면 buf1에 절대경로 반환
 				perror(buf1);
 				printf("\n");
 				continue;
@@ -221,10 +254,13 @@ int main(){
 				printf("\n");
 				continue;
 			}; 
-			myfunc2(buf1);
+			myfunc2(buf1); // index 0에 해당하는 놈 출력 (Base!!!)
 			Scandir(ptr, command[2], myfunc, 0);
 			chdir(cdir); // Scandir끝난후 원래 디렉토리로 이동
-			idx = 0;
+			
+			diff_shell();
+
+			idx = 0; // find 명령을 다시 실행하기 위해서는 idx를 0으로 맞춰주어야함.
 		}
 		else{
 			help_print();
@@ -278,4 +314,117 @@ void help_print(){
 			printf("  > exit\n\n");
 			printf("  [OPTION ... ]\n   q : report only when files differ\n   s : report when two files are the same\n");
 			printf("   i : ignore case differences in file contents\n   r : recursively compare any subdirectories found\n\n");
+}
+
+
+/* 
+ * 기준index:   buf1, 	            basemode
+ * 비교index:   f[i].file_name,     f[i].dirfile
+*/
+void diff_shell(){
+	char basemode = S_ISDIR(fstat_1.st_mode) ? 'd' : 'f';
+	while(1){
+
+    		struct dirent **items_1;
+    		struct dirent **items_2;
+		int i=0, nitems_1, nitems_2;
+
+		while (1){
+			printf(">> ");
+			int num;
+			num = scanf("%d", &i);
+			while (getchar() != '\n');
+			if (num== 1){
+				break;
+			}
+			else{
+				printf("Index Error !!\n");
+				
+			}
+		}
+		
+		if(1<=i && i<=idx){
+			
+			if(f[i].dirfile == 'd' && basemode == 'd'){
+				char str1[MAX][MAX];    int str1_len=0;
+				char str2[MAX][MAX];    int str2_len=0;
+
+				nitems_1 = scandir(buf1, &items_1, NULL, alphasort);
+				nitems_2 = scandir(f[i].file_name, &items_2, NULL, alphasort);
+				
+				
+				for(int m=0; m<nitems_1;m++){
+
+        				if ( (!strcmp(items_1[m]->d_name, ".")) || (!strcmp(items_1[m]->d_name, "..")) )
+        				{
+           				 	continue;
+        				}
+					strcpy(str1[++str1_len], items_1[m]->d_name);
+				}
+				for(int n=0; n<nitems_2;n++){
+
+        				if ( (!strcmp(items_2[n]->d_name, ".")) || (!strcmp(items_2[n]->d_name, "..")) )
+        				{
+           				 	continue;
+        				}
+					strcpy(str2[++str2_len], items_2[n]->d_name);
+				}
+
+				LCS(str1, str2, str1_len, str2_len);
+			}
+			else if(f[i].dirfile == 'f' && basemode == 'f'){
+				
+				continue;
+			}
+			else{
+				printf("Cannot compare!! \n");
+				continue;
+			}
+		}
+		else
+			printf("Not existing index \n");
+	}
+
+}
+
+void LCS(char (*str1)[MAX], char (*str2)[MAX], int str1_len, int str2_len){
+	str1_len++;
+	str2_len++;	
+	int Table[MAX][MAX] = {0, };
+	for (int i = 1; i < str1_len; i++) {
+        	for (int j = 1; j < str2_len; j++) {
+            		if (!strcmp(str1[i], str2[j])) {
+				printf("%s와 %s는 같습니다\n", str1[i], str2[j]);
+                		Table[i][j] = Table[i - 1][j - 1] + 1;
+           	 	}
+            		else {
+                		Table[i][j] = MAX_NUM(Table[i - 1][j], Table[i][j - 1]);
+            		}
+        	}
+	}
+	for(int i=0; i<str1_len;i++){
+		for(int j=0;j<str2_len;j++){
+			printf("%d",Table[i][j]);
+		}
+		printf("\n");
+	}
+	char LCS_Str[MAX][MAX] = {'\0',};
+    	int LCS_len = Table[str1_len-1][str2_len-1]-1; 
+ 
+    	int i = str1_len - 1;
+    	for (int j = str2_len - 1; j > 0; ) {
+		if (Table[i][j] == Table[i-1][j]) {
+		    i--;
+		}
+		else if (Table[i][j] == Table[i][j - 1]) {
+		    j--;
+		}
+		else if (Table[i - 1][j] == Table[i][j - 1]) { 
+		    strcpy(LCS_Str[LCS_len--], str2[j--]);
+		    i--;
+        	}
+	}
+
+	printf("LCS Size : %d,   LCS String : %s%s%s%s\n", Table[str1_len - 1][str2_len - 1], LCS_Str[0],LCS_Str[1],LCS_Str[2],LCS_Str[3]);
+
 }
