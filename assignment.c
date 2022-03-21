@@ -16,7 +16,7 @@
 char **parse(char *);
 void help_print();
 void diff_shell();
-void LCS(char (*str1)[MAX], char (*str2)[MAX], int str1_len, int str2_len);
+void LCS(char (*str1)[MAX], char (*str2)[MAX], int i2, int str1_len, int str2_len);
 
 static int  idx = 0;
 
@@ -369,8 +369,8 @@ void diff_shell(){
         				}
 					strcpy(str2[++str2_len], items_2[n]->d_name);
 				}
-
-				LCS(str1, str2, str1_len, str2_len);
+				//char fshare[MAX][MAX];
+				LCS(str1, str2, i, str1_len, str2_len);
 			}
 			else if(f[i].dirfile == 'f' && basemode == 'f'){
 				
@@ -387,7 +387,7 @@ void diff_shell(){
 
 }
 
-void LCS(char (*str1)[MAX], char (*str2)[MAX], int str1_len, int str2_len){
+void LCS(char (*str1)[MAX], char (*str2)[MAX], int i2, int str1_len, int str2_len){
 	str1_len++;
 	str2_len++;	
 	int Table[MAX][MAX] = {0, };
@@ -409,10 +409,11 @@ void LCS(char (*str1)[MAX], char (*str2)[MAX], int str1_len, int str2_len){
 		printf("\n");
 	}
 	char LCS_Str[MAX][MAX] = {'\0',};
-    	int LCS_len = Table[str1_len-1][str2_len-1]-1; 
+    	int LCS_len = Table[str1_len-1][str2_len-1]-1; // index는 0부터 시작하므로 -1을 해준다.
  
     	int i = str1_len - 1;
-    	for (int j = str2_len - 1; j > 0; ) {
+	int j = str2_len - 1;
+    	for (; j > 0; ) {
 		if (Table[i][j] == Table[i-1][j]) {
 		    i--;
 		}
@@ -424,7 +425,54 @@ void LCS(char (*str1)[MAX], char (*str2)[MAX], int str1_len, int str2_len){
 		    i--;
         	}
 	}
+	LCS_len = Table[str1_len-1][str2_len-1];
+	//str1_len--; str2_len--;
 
-	printf("LCS Size : %d,   LCS String : %s%s%s%s\n", Table[str1_len - 1][str2_len - 1], LCS_Str[0],LCS_Str[1],LCS_Str[2],LCS_Str[3]);
+
+	//printf("LCS Size : %d,   LCS_len: %d,    LCS String : %s%s%s%s\n", Table[str1_len - 1][str2_len - 1], LCS_len, LCS_Str[0],LCS_Str[1],LCS_Str[2],LCS_Str[3]);
+	printf("머야시발");	
+
+	i=1;
+	j=1;
+	printf("dsaf");
+	if(LCS_len>=1){
+		printf("sdds");
+		for(int idx=0; idx<LCS_len; idx++){
+			
+			while(!strcmp(str1[i], LCS_Str[idx]) && !strcmp(str2[j], LCS_Str[idx]) ){ // Only in dir
+			
+				if(!strcmp(str1[i], LCS_Str[idx]) && strcmp(str2[j], LCS_Str[idx]) ){
+					printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+					j++;
+				}
+				else if(strcmp(str1[i], LCS_Str[idx]) && !strcmp(str2[j], LCS_Str[idx])){
+					printf("Only in %s: %s\n", buf1, str1[i]);
+					i++;
+				}
+				else if(strcmp(str1[i], LCS_Str[idx]) && strcmp(str2[j], LCS_Str[idx])){
+					// str1[i]와 str2[j]를 비교해서 ascii가 작은 문자열을 먼저 출력한다.
+					if( strcmp(str1[i], str2[j]) < 0){
+							
+						printf("Only in %s: %s\n", buf1, str1[i]);
+						printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+					}
+					else{
+						printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+						printf("Only in %s: %s\n", buf1, str1[i]);
+					}
+					i++;
+					j++;
+				}
+			}
+
+			printf("구현중: %s\n", LCS_Str[idx]);
+		}
+	}
+	else{
+		printf("아직 구현중!!!\n");	
+	}
+
+	
+	
 
 }
