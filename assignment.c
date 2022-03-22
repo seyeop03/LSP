@@ -327,7 +327,13 @@ void help_print(){
  * 비교index:   f[i].file_name,     f[i].dirfile
 */
 void diff_shell(){
+
+	char str1[MAX][MAX]; 
+	int str1_len=0;
+	char str2[MAX][MAX];
+	int str2_len=0;
 	char basemode = S_ISDIR(fstat_1.st_mode) ? 'd' : 'f';
+	
 	while(1){
 
     		struct dirent **items_1;
@@ -351,10 +357,6 @@ void diff_shell(){
 		if(1<=i && i<=idx){
 			
 			if(f[i].dirfile == 'd' && basemode == 'd'){
-				char str1[1000][MAX]; 
-				int str1_len=0;
-				char str2[1000][MAX];
-				int str2_len=0;
 
 				nitems_1 = scandir(buf1, &items_1, NULL, alphasort);
 				nitems_2 = scandir(f[i].file_name, &items_2, NULL, alphasort);
@@ -378,19 +380,23 @@ void diff_shell(){
 				}
 				//char fshare[MAX][MAX];
 				LCS(str1, str2, i, str1_len+1, str2_len+1);
+				return;
 			}
 			else if(f[i].dirfile == 'f' && basemode == 'f'){
 				hard_LCS();	
-				continue;
+				return;
 			}
 			else{
 				printf("Cannot compare!! \n");
-				continue;
+				return;
 			}
 		}
 		else
 			printf("Not existing index \n");
+
+		break;
 	}
+
 
 }
 
@@ -410,12 +416,6 @@ void LCS(char str1[][1024], char str2[][1024], int i2, int str1_len, int str2_le
                 		Table[i][j] = MAX_NUM(Table[i - 1][j], Table[i][j - 1]);
             		}
         	}
-	}
-	for(int i=0; i<str1_len;i++){
-		for(int j=0;j<str2_len;j++){
-			printf("%d",Table[i][j]);
-		}
-		printf("\n");
 	}
     	
 	LCS_len = Table[str1_len-1][str2_len-1]-1; // index는 0부터 시작하므로 -1을 해준다.
@@ -438,82 +438,114 @@ void LCS(char str1[][1024], char str2[][1024], int i2, int str1_len, int str2_le
 
 
 	// printf("LCS Size : %d,   LCS_len: %d,    LCS String : %s%s%s%s\n", Table[str1_len - 1][str2_len - 1], LCS_len, LCS_Str[0],LCS_Str[1],LCS_Str[2],LCS_Str[3]);
-	i=1;
-	j=1;
 	
+	
+	
+	
+		/*공통디렉토리 문자열 만들기*/
+	    	char str_1[1024] ;
+  		char str_2[1024] ;
+		strcpy(str_1, buf1); strcpy(str_2, f[i2].file_name);
 
+		char tmp_str1[100][MAX]; int i1=0;
+		char tmp_str2[100][MAX]; int j1=0;
+
+		char *tmp = strtok(str_1, "/");
+		while(tmp!=NULL){
+			strcpy(tmp_str1[i1], tmp);
+			i1++;
+			tmp = strtok(NULL, "/");
+		}
+		tmp = strtok(str_1, "/");
+		while(tmp!=NULL){
+			strcpy(tmp_str2[0], tmp);
+			j1++;
+			tmp = strtok(NULL, "/");
+		}
+		char shared[MAX]={'/'};
+		for(int k=0;k<i1;k++){
+			if(!strcmp(tmp_str1[k],tmp_str2[k])){
+				strcat(shared, tmp_str1[k]);
+				strcat(shared,"/");
+			}
+			else{
+			    break;
+			}
+		}
+    		/****************************/
+	
+	// str1[1],str1[2]... , str2[1], str2[2]와같이 인덱스 1부터 시작.
+	i=1; 
+	j=1;
 
 	if(LCS_len>=1){
 		char tmp1;
 		char tmp2;
 		
-		/*공통디렉토리 문자열 만들기*/
-//	    	char str_1[1024] ;
-//  		char str_2[1024] ;
-//		strcpy(str_1, buf1); strcpy(str_2, f[i2].file_name);
-//
-//    char tmp_str1[MAX][MAX]; int i1=0;
-//    char tmp_str2[MAX][MAX]; int j1=0;
-//    
-//    char *tmp = strtok(str_1, "/");
-//    while(tmp!=NULL){
-//        strcpy(tmp_str1[i1],tmp);
-//        printf("%s\n",tmp_str1[i1]);
-//        i1++;
-//        tmp = strtok(NULL, "/");
-//    }
-//    
-//    tmp = strtok(str_2, "/");
-//    while(tmp!=NULL){
-//        strcpy(tmp_str2[j1],tmp);
-//        printf("%s\n",tmp_str2[j1]);
-//        j1++;
-//        tmp = strtok(NULL, "/");
-//    }
-//    char shared[MAX]={'/'};
-//    for(int k=0;k<i1;k++){
-//        if(!strcmp(tmp_str1[k],tmp_str2[k])){
-//                strcat(shared, tmp_str1[k]);
-//                strcat(shared,"/");
-//        }
-//        else
-//            break;
-//    }
-//    
-//    printf("%s", shared);		
-    /****************************/
+
 		for(int idx=0; idx<LCS_len; idx++){
-			printf("f[i2].filename: %s\n", f[i2].file_name);
 			struct stat str1_stat;
 			struct stat str2_stat;
+
+			/* LCS와 다른경우*/
 			if(strcmp(str1[i], LCS_Str[idx]) || strcmp(str2[j], LCS_Str[idx]) ){
 				while(strcmp(str1[i], LCS_Str[idx]) || strcmp(str2[j], LCS_Str[idx]) ){ // Only in dir
 					if(!strcmp(str1[i], LCS_Str[idx]) && strcmp(str2[j], LCS_Str[idx])){
-						printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+						printf("Only in %s: %s\n", f[i2].file_name+strlen(shared), str2[j]);
 						j++;
 					}
 					else if(strcmp(str1[i], LCS_Str[idx]) && !strcmp(str2[j], LCS_Str[idx])){
-						printf("Only in %s: %s\n", buf1, str1[i]);
+						printf("Only in %s: %s\n", buf1+strlen(shared), str1[i]);
 						i++;
 					}
 					else if(strcmp(str1[i], LCS_Str[idx]) && strcmp(str2[j], LCS_Str[idx])){
 						// str1[i]와 str2[j]를 비교해서 ascii가 작은 문자열을 먼저 출력한다.
 						if( strcmp(str1[i], str2[j]) < 0){
-								
-							printf("Only in %s: %s\n", buf1, str1[i]);
-							printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+							printf("\n");	
+							printf("Only in %s: %s\n", buf1+strlen(shared), str1[i]);
+							//printf("Only in %s: %s\n", f[i2].file_name+strlen(shared), str2[j]);
+							i++;
 						}
 						else{
-							printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
-							printf("Only in %s: %s\n", buf1, str1[i]);
+							printf("\n");	
+							printf("Only in %s: %s\n", f[i2].file_name+strlen(shared), str2[j]);
+							//printf("Only in %s: %s\n", buf1+strlen(shared), str1[i]);
+							j++;
 						}
-						i++;
-						j++;
+						
 					}
 				}
 
+				/*LCS까지 왔으면 드디어 같은 부분 처리*/
+				chdir(buf1);	
+				lstat(str1[i], &str1_stat);
+				chdir(f[i2].file_name);
+				lstat(str2[j], &str2_stat);
+				
+				char str1_mode = (S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f';
+				char str2_mode = (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f';
+				if((S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f' == 'd' && (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f' == 'd'){ // 둘다 d
+					printf("Common subdirectories : %s/%s and %s/%s\n", f[i2].file_name+strlen(shared), LCS_Str[idx], buf1+strlen(shared), LCS_Str[idx]);
+				}
+
+				else if((S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f' == 'd' && (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f' == 'f'){
+					printf("File %s/%s is a directory while file %s/%s is regular file\n", f[i2].file_name+strlen(shared), LCS_Str[idx], buf1+strlen(shared), LCS_Str[idx]);
+				}
+
+				else if((S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f' == 'f' && (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f' == 'd'){
+					
+					printf("File %s/%s is a regular file while file %s/%s is directory\n", f[i2].file_name+strlen(shared), LCS_Str[idx], buf1+strlen(shared), LCS_Str[idx]);
+				}
+				else{	
+					printf("\n\nPLZ diff ㅠㅠㅠ\n\n");
+				}
+					
+				i++;
+				j++;
+
 					
 			}
+			/* LCS+1 하자마자 바로 같은 경우 */
 			else{
 				/* 같을경우 처리부분 */
 				chdir(buf1);	
@@ -524,14 +556,16 @@ void LCS(char str1[][1024], char str2[][1024], int i2, int str1_len, int str2_le
 				char str1_mode = (S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f';
 				char str2_mode = (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f';
 				if((S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f' == 'd' && (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f' == 'd'){ // 둘다 d
-					printf("");
+					printf("Common subdirectories : %s/%s and %s/%s\n", f[i2].file_name+strlen(shared), LCS_Str[idx], buf1+strlen(shared), LCS_Str[idx]);
 				}
+
 				else if((S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f' == 'd' && (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f' == 'f'){
-				
+					printf("File %s/%s is a directory while file %s/%s is regular file\n", f[i2].file_name+strlen(shared), LCS_Str[idx], buf1+strlen(shared), LCS_Str[idx]);
 				}
+
 				else if((S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f' == 'f' && (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f' == 'd'){
 					
-				
+					printf("File %s/%s is a regular file while file %s/%s is directory\n", f[i2].file_name+strlen(shared), LCS_Str[idx], buf1+strlen(shared), LCS_Str[idx]);
 				}
 				else{	
 					printf("\n\nPLZ diff ㅠㅠㅠ\n\n");
@@ -543,9 +577,87 @@ void LCS(char str1[][1024], char str2[][1024], int i2, int str1_len, int str2_le
 
 			
 		}
+		/* LCS 끝난 이후부분 처리 */
+		if(i>=str1_len){
+			while(j<str2_len){	
+				printf("Only in %s: %s\n", f[i2].file_name+strlen(shared), str2[j]);
+				j++;
+			}
+		}
+		else if(j>=str2_len){
+			while(i<str1_len){	
+				printf("Only in %s: %s\n", buf1+strlen(shared), str1[i]);
+				i++;
+			}
+		}
+		else{
+			while(i<str1_len || j<str2_len){
+				if( strcmp(str1[i], str2[j]) < 0){
+					printf("Only in %s: %s\n", buf1+strlen(shared), str1[i]);
+					//printf("Only in %s: %s\n", f[i2].file_name+strlen(shared), str2[j]);
+					i++;
+					if(i>=str1_len){
+						while(j<str2_len){	
+							printf("Only in %s: %s\n", f[i2].file_name+strlen(shared), str2[j]);
+							j++;
+						}
+					}
+				}
+				else{
+					printf("Only in %s: %s\n", f[i2].file_name+strlen(shared), str2[j]);
+					//printf("Only in %s: %s\n", buf1+strlen(shared), str1[i]);
+					j++;
+					if(j>=str2_len){
+						while(i<str1_len){	
+							printf("Only in %s: %s\n", buf1+strlen(shared), str1[i]);
+							i++;
+						}
+					}
+				}
+			}
+		}
+		
 	}
+	/* 하위디렉토리 이름이 공통된 부분이 하나도 없을 경우*/
 	else{
-		printf("아직 구현중!!!\n");	
+		if(i>=str1_len){
+			while(j<str2_len){	
+				printf("Only in %s: %s\n", f[i2].file_name+strlen(shared), str2[j]);
+				j++;
+			}
+		}
+		else if(j>=str2_len){
+			while(i<str1_len){	
+				printf("Only in %s: %s\n", buf1+strlen(shared), str1[i]);
+				i++;
+			}
+		}
+		else{
+			while(i<str1_len || j<str2_len){
+				if( strcmp(str1[i], str2[j]) < 0){
+					printf("Only in %s: %s\n", buf1, str1[i]);
+					//printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+					i++;
+					if(i>=str1_len){
+						while(j<str2_len){	
+							printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+							j++;
+						}
+					}
+				}
+				else{
+					printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+					//printf("Only in %s: %s\n", buf1, str1[i]);
+					j++;
+					if(j>=str2_len){
+						while(i<str1_len){	
+							printf("Only in %s: %s\n", buf1, str1[i]);
+							i++;
+						}
+					}
+				}
+			}
+		}
 	}
 	
 	return;
@@ -555,20 +667,62 @@ void LCS(char str1[][1024], char str2[][1024], int i2, int str1_len, int str2_le
 }
 
 void hard_LCS(){
-//	char line1[MAX][MAX];
-//	char line2[MAX][MAX];
-//	char *pLine;
-//	
-//	FILE* fp1 = fopen("1.txt", "r");
-//	FILE* fp2 = fopen("/1.txt", "r");
-//	while(!feof(fp1)){
-//		fgets(line1, MAX, fp1);
-//        	printf("%s", line1);
-//	}
-//	while(!feof(fp2)){
-//		fgets(line2, MAX, fp2);
-//        	printf("%s", line2);
-//	}
-//	fclose(fp1);
-//	fclose(fp2);
+	int str1_len=1, str2_len=1;
+	/*파일로부터 읽어오는 부분*/	
+	char str1[100][MAX];
+	char str2[100][MAX];
+	FILE* fp1 = fopen("1.txt", "r");
+	FILE* fp2 = fopen("/1.txt", "r");
+	while(!feof(fp1)){
+		fgets(str1[str1_len++], MAX, fp1);
+        	printf("%s", str1[str1_len-1]);
+	}
+	printf("******************************\n");
+	while(!feof(fp2)){
+		fgets(str2[str2_len++], MAX, fp2);
+        	printf("%s", str2[str2_len-1]);
+	}
+
+	fclose(fp1);
+	fclose(fp2);
+	/********************************/
+
+	int Table[100][MAX] = {0, };
+	char LCS_Str[100][MAX] = {'\0',};
+	int LCS_len;
+	
+	
+	for (int i = 1; i < str1_len; i++) {
+        	for (int j = 1; j < str2_len; j++) {
+            		if (!strcmp(str1[i], str2[j])) {
+                		Table[i][j] = Table[i - 1][j - 1] + 1;
+           	 	}
+            		else {
+                		Table[i][j] = MAX_NUM(Table[i - 1][j], Table[i][j - 1]);
+            		}
+        	}
+	}
+    	
+	LCS_len = Table[str1_len-1][str2_len-1]-1; // index는 0부터 시작하므로 -1을 해준다.
+ 
+    	int i = str1_len - 1;
+	int j = str2_len - 1;
+    	while( j > 0 ) {
+		if (Table[i][j] == Table[i-1][j]) {
+		    i--;
+		}
+		else if (Table[i][j] == Table[i][j - 1]) {
+		    j--;
+		}
+		else if (Table[i - 1][j] == Table[i][j - 1]) { 
+		    strcpy(LCS_Str[LCS_len--], str2[j--]);
+		    i--;
+        	}
+	}
+	LCS_len = Table[str1_len-1][str2_len-1];
+	
+	printf("*********************************\n");
+	for(int z=0;z<LCS_len;z++){
+		printf("%s",LCS_Str[z]);
+	}
 }
