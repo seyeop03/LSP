@@ -16,7 +16,9 @@
 char **parse(char *);
 void help_print();
 void diff_shell();
-void LCS(char (*str1)[MAX], char (*str2)[MAX], int i2, int str1_len, int str2_len);
+void LCS(char str1[][1024], char str2[][1024], int i2, int str1_len, int str2_len);
+void hard_LCS();
+
 
 static int  idx = 0;
 
@@ -28,10 +30,10 @@ struct stat fstat_1;// command[1] stat
 
 /* diff_shell을 위한 구조체 */
 struct index_struct{
-	char file_name[MAX];
+	char file_name[1024]; // full path
 	char dirfile;
 };
-struct index_struct f[MAX];
+struct index_struct f[1024];
 
 
 
@@ -45,6 +47,7 @@ void myfunc(char *file, struct stat *fstat){
 
 
 /* if~else문 아래것들은 출력인데 원치않는 출력을 하기전에 빨리 없애버리기위해 먼저 경로를 버퍼에 집어넣음 */
+/* index 0파일을 출력하지 않기위함  */
 	if(strcmp(getcwd(cdir,256), "/")){
 
 		sprintf(tmp_cat,"%s/%s",getcwd(cdir,256),file);
@@ -53,7 +56,7 @@ void myfunc(char *file, struct stat *fstat){
 		
 	}
 	else{
-		sprintf(tmp_cat,"/%s",getcwd(cdir,256),file);
+		sprintf(tmp_cat,"/%s",file);
 		if(!strcmp(buf1, tmp_cat)) return;
 		
 	}
@@ -218,8 +221,10 @@ int main(){
 	
 	while(1){
 		printf("20193439> ");
-		gets(ter);
-		
+
+		fgets(ter, 1024, stdin);
+		ter[strlen(ter) - 1] = '\0';
+
 		if(!strcmp(ter,"")) continue;
 		
 		command = parse(ter);
@@ -238,7 +243,7 @@ int main(){
 			char buf2[1024];
 		        char cdir[256];
 			char *ptr;
-			getcwd(cdir, 256); // Scandir이 끝나면 '/'로 이동되므로, cdir미리 저장 => 다시 원래 디렉토리로 이동(getcwd+chdir)	
+			getcwd(cdir, 256); // Scandir이 끝나면 '/'로 이동되므로, cdir에 현재디렉토리 미리 저장 => 다시 원래 디렉토리로 이동(getcwd+chdir)	
 			
 			if(realpath(command[1], buf1) == NULL){ // command[1] 절대경로로 있는지 검사후 있으면 buf1에 절대경로 반환
 				perror(buf1);
@@ -328,7 +333,7 @@ void diff_shell(){
     		struct dirent **items_1;
     		struct dirent **items_2;
 		int i=0, nitems_1, nitems_2;
-
+		
 		while (1){
 			printf(">> ");
 			int num;
@@ -346,8 +351,10 @@ void diff_shell(){
 		if(1<=i && i<=idx){
 			
 			if(f[i].dirfile == 'd' && basemode == 'd'){
-				char str1[MAX][MAX];    int str1_len=0;
-				char str2[MAX][MAX];    int str2_len=0;
+				char str1[1000][MAX]; 
+				int str1_len=0;
+				char str2[1000][MAX];
+				int str2_len=0;
 
 				nitems_1 = scandir(buf1, &items_1, NULL, alphasort);
 				nitems_2 = scandir(f[i].file_name, &items_2, NULL, alphasort);
@@ -370,10 +377,10 @@ void diff_shell(){
 					strcpy(str2[++str2_len], items_2[n]->d_name);
 				}
 				//char fshare[MAX][MAX];
-				LCS(str1, str2, i, str1_len, str2_len);
+				LCS(str1, str2, i, str1_len+1, str2_len+1);
 			}
 			else if(f[i].dirfile == 'f' && basemode == 'f'){
-				
+				hard_LCS();	
 				continue;
 			}
 			else{
@@ -387,14 +394,16 @@ void diff_shell(){
 
 }
 
-void LCS(char (*str1)[MAX], char (*str2)[MAX], int i2, int str1_len, int str2_len){
-	str1_len++;
-	str2_len++;	
+void LCS(char str1[][1024], char str2[][1024], int i2, int str1_len, int str2_len){
 	int Table[MAX][MAX] = {0, };
+	char LCS_Str[MAX][MAX] = {'\0',};
+	int LCS_len;
+	int i,j;
+	
+	
 	for (int i = 1; i < str1_len; i++) {
         	for (int j = 1; j < str2_len; j++) {
             		if (!strcmp(str1[i], str2[j])) {
-				printf("%s와 %s는 같습니다\n", str1[i], str2[j]);
                 		Table[i][j] = Table[i - 1][j - 1] + 1;
            	 	}
             		else {
@@ -408,12 +417,12 @@ void LCS(char (*str1)[MAX], char (*str2)[MAX], int i2, int str1_len, int str2_le
 		}
 		printf("\n");
 	}
-	char LCS_Str[MAX][MAX] = {'\0',};
-    	int LCS_len = Table[str1_len-1][str2_len-1]-1; // index는 0부터 시작하므로 -1을 해준다.
+    	
+	LCS_len = Table[str1_len-1][str2_len-1]-1; // index는 0부터 시작하므로 -1을 해준다.
  
-    	int i = str1_len - 1;
-	int j = str2_len - 1;
-    	for (; j > 0; ) {
+    	i = str1_len - 1;
+	j = str2_len - 1;
+    	while( j > 0 ) {
 		if (Table[i][j] == Table[i-1][j]) {
 		    i--;
 		}
@@ -426,53 +435,140 @@ void LCS(char (*str1)[MAX], char (*str2)[MAX], int i2, int str1_len, int str2_le
         	}
 	}
 	LCS_len = Table[str1_len-1][str2_len-1];
-	//str1_len--; str2_len--;
 
 
-	//printf("LCS Size : %d,   LCS_len: %d,    LCS String : %s%s%s%s\n", Table[str1_len - 1][str2_len - 1], LCS_len, LCS_Str[0],LCS_Str[1],LCS_Str[2],LCS_Str[3]);
-	printf("머야시발");	
-
+	// printf("LCS Size : %d,   LCS_len: %d,    LCS String : %s%s%s%s\n", Table[str1_len - 1][str2_len - 1], LCS_len, LCS_Str[0],LCS_Str[1],LCS_Str[2],LCS_Str[3]);
 	i=1;
 	j=1;
-	printf("dsaf");
+	
+
+
 	if(LCS_len>=1){
-		printf("sdds");
+		char tmp1;
+		char tmp2;
+		
+		/*공통디렉토리 문자열 만들기*/
+//	    	char str_1[1024] ;
+//  		char str_2[1024] ;
+//		strcpy(str_1, buf1); strcpy(str_2, f[i2].file_name);
+//
+//    char tmp_str1[MAX][MAX]; int i1=0;
+//    char tmp_str2[MAX][MAX]; int j1=0;
+//    
+//    char *tmp = strtok(str_1, "/");
+//    while(tmp!=NULL){
+//        strcpy(tmp_str1[i1],tmp);
+//        printf("%s\n",tmp_str1[i1]);
+//        i1++;
+//        tmp = strtok(NULL, "/");
+//    }
+//    
+//    tmp = strtok(str_2, "/");
+//    while(tmp!=NULL){
+//        strcpy(tmp_str2[j1],tmp);
+//        printf("%s\n",tmp_str2[j1]);
+//        j1++;
+//        tmp = strtok(NULL, "/");
+//    }
+//    char shared[MAX]={'/'};
+//    for(int k=0;k<i1;k++){
+//        if(!strcmp(tmp_str1[k],tmp_str2[k])){
+//                strcat(shared, tmp_str1[k]);
+//                strcat(shared,"/");
+//        }
+//        else
+//            break;
+//    }
+//    
+//    printf("%s", shared);		
+    /****************************/
 		for(int idx=0; idx<LCS_len; idx++){
-			
-			while(!strcmp(str1[i], LCS_Str[idx]) && !strcmp(str2[j], LCS_Str[idx]) ){ // Only in dir
-			
-				if(!strcmp(str1[i], LCS_Str[idx]) && strcmp(str2[j], LCS_Str[idx]) ){
-					printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
-					j++;
-				}
-				else if(strcmp(str1[i], LCS_Str[idx]) && !strcmp(str2[j], LCS_Str[idx])){
-					printf("Only in %s: %s\n", buf1, str1[i]);
-					i++;
-				}
-				else if(strcmp(str1[i], LCS_Str[idx]) && strcmp(str2[j], LCS_Str[idx])){
-					// str1[i]와 str2[j]를 비교해서 ascii가 작은 문자열을 먼저 출력한다.
-					if( strcmp(str1[i], str2[j]) < 0){
-							
-						printf("Only in %s: %s\n", buf1, str1[i]);
+			printf("f[i2].filename: %s\n", f[i2].file_name);
+			struct stat str1_stat;
+			struct stat str2_stat;
+			if(strcmp(str1[i], LCS_Str[idx]) || strcmp(str2[j], LCS_Str[idx]) ){
+				while(strcmp(str1[i], LCS_Str[idx]) || strcmp(str2[j], LCS_Str[idx]) ){ // Only in dir
+					if(!strcmp(str1[i], LCS_Str[idx]) && strcmp(str2[j], LCS_Str[idx])){
 						printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+						j++;
 					}
-					else{
-						printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+					else if(strcmp(str1[i], LCS_Str[idx]) && !strcmp(str2[j], LCS_Str[idx])){
 						printf("Only in %s: %s\n", buf1, str1[i]);
+						i++;
 					}
-					i++;
-					j++;
+					else if(strcmp(str1[i], LCS_Str[idx]) && strcmp(str2[j], LCS_Str[idx])){
+						// str1[i]와 str2[j]를 비교해서 ascii가 작은 문자열을 먼저 출력한다.
+						if( strcmp(str1[i], str2[j]) < 0){
+								
+							printf("Only in %s: %s\n", buf1, str1[i]);
+							printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+						}
+						else{
+							printf("Only in %s: %s\n", f[i2].file_name, str2[j]);
+							printf("Only in %s: %s\n", buf1, str1[i]);
+						}
+						i++;
+						j++;
+					}
 				}
+
+					
+			}
+			else{
+				/* 같을경우 처리부분 */
+				chdir(buf1);	
+				lstat(str1[i], &str1_stat);
+				chdir(f[i2].file_name);
+				lstat(str2[j], &str2_stat);
+				
+				char str1_mode = (S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f';
+				char str2_mode = (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f';
+				if((S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f' == 'd' && (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f' == 'd'){ // 둘다 d
+					printf("");
+				}
+				else if((S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f' == 'd' && (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f' == 'f'){
+				
+				}
+				else if((S_ISDIR(str1_stat.st_mode)) ? 'd' : 'f' == 'f' && (S_ISDIR(str2_stat.st_mode)) ? 'd' : 'f' == 'd'){
+					
+				
+				}
+				else{	
+					printf("\n\nPLZ diff ㅠㅠㅠ\n\n");
+				}
+					
+				i++;
+				j++;
 			}
 
-			printf("구현중: %s\n", LCS_Str[idx]);
+			
 		}
 	}
 	else{
 		printf("아직 구현중!!!\n");	
 	}
-
+	
+	return;
 	
 	
 
+}
+
+void hard_LCS(){
+//	char line1[MAX][MAX];
+//	char line2[MAX][MAX];
+//	char *pLine;
+//	
+//	FILE* fp1 = fopen("1.txt", "r");
+//	FILE* fp2 = fopen("/1.txt", "r");
+//	while(!feof(fp1)){
+//		fgets(line1, MAX, fp1);
+//        	printf("%s", line1);
+//	}
+//	while(!feof(fp2)){
+//		fgets(line2, MAX, fp2);
+//        	printf("%s", line2);
+//	}
+//	fclose(fp1);
+//	fclose(fp2);
 }
